@@ -22,8 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # full history, so gitleaks can scan past commits too
 
       - uses: sitardaniel/pipelineguard-action@main
         with:
@@ -40,9 +38,10 @@ jobs:
 
 ## Notes
 
-- Uses `fetch-depth: 0` in your own `actions/checkout` step if you want
-  Gitleaks to scan your full git history rather than just the current
-  commit - that's controlled by your checkout step, not this action.
+- Gitleaks scans the current file tree (`--no-git`), not commit history -
+  this is a per-push CI gate, so it only needs to catch secrets present
+  right now, not re-flag every historical (possibly already-rotated)
+  commit on every single run.
 - Results are written to `$GITHUB_STEP_SUMMARY` (visible on the Actions run
   summary page) - nothing is uploaded or stored anywhere else.
 - Requires Docker on the runner (available by default on GitHub-hosted

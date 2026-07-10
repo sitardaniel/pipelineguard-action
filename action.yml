@@ -44,9 +44,14 @@ runs:
     - name: Run gitleaks
       if: contains(inputs.scanners, 'gitleaks')
       shell: bash
+      # --no-git: scan the current file tree, not full commit history. A CI
+      # gate runs on every push, so it only needs to catch secrets present
+      # right now - unlike the main PipelineGuard system's periodic full-
+      # history audit, re-flagging every past (possibly already-rotated)
+      # secret on every single run would be noisy and wrong for this use case.
       run: |
         docker run --rm -v "${{ github.workspace }}:/repo" zricethezav/gitleaks detect \
-          --source "/repo/${{ inputs.path }}" --report-format json \
+          --source "/repo/${{ inputs.path }}" --no-git --report-format json \
           --report-path "/repo/.pipelineguard/gitleaks.json" --exit-code 0 || true
 
     - name: Run grype
