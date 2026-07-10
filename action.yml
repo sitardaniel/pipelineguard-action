@@ -1,0 +1,65 @@
+name: 'PipelineGuard Scan'
+description: 'Run trivy, checkov, gitleaks, and grype against this repo and fail CI on findings above a severity threshold.'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  path:
+    description: 'Directory to scan, relative to the repo root.'
+    required: false
+    default: '.'
+  fail-on:
+    description: 'Minimum severity that fails the build: CRITICAL, HIGH, MEDIUM, LOW, or NONE to only report.'
+    required: false
+    default: 'HIGH'
+  scanners:
+    description: 'Comma-separated list of scanners to run: trivy, checkov, gitleaks, grype.'
+    required: false
+    default: 'trivy,checkov,gitleaks,grype'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare results directory
+      shell: bash
+      run: mkdir -p "${{ github.workspace }}/.pipelineguard"
+
+    - name: Run trivy
+      if: contains(inputs.scanners, 'trivy')
+      shell: bash
+      run: |
+        docker run --rm -v "${{ github.workspace }}:/repo" aquasec/trivy fs \
+          --format json --severity MEDIUM,HIGH,CRITICAL \
+          --output "/repo/.pipelineguard/trivy.json" "/repo/${{ inputs.path }}" || true
+
+    - name: Run checkov
+      if: contains(inputs.scanners, 'checkov')
+      shell: bash
+      run: |
+        docker run --rm -v "${{ github.workspace }}:/repo" bridgecrew/checkov \
+          -d "/repo/${{ inputs.path }}" --framework terraform --output json --compact --soft-fail \
+          > "${{ github.workspace }}/.pipelineguard/checkov.json" 2>/dev/null || true
+
+    - name: Run gitleaks
+      if: contains(inputs.scanners, 'gitleaks')
+      shell: bash
+      run: |
+        docker run --rm -v "${{ github.workspace }}:/repo" zricethezav/gitleaks detect \
+          --source "/repo/${{ inputs.path }}" --report-format json \
+          --report-path "/repo/.pipelineguard/gitleaks.json" --exit-code 0 || true
+
+    - name: Run grype
+      if: contains(inputs.scanners, 'grype')
+      shell: bash
+      run: |
+        docker run --rm -v "${{ github.workspace }}:/repo" anchore/grype:debug \
+          /grype "dir:/repo/${{ inputs.path }}" --output json \
+          --file "/repo/.pipelineguard/grype.json" || true
+
+    - name: Aggregate results and decide pass/fail
+      shell: bash
+      run: |
+        python3 "${{ github.action_path }}/aggregate.py" \
+          --fail-on "${{ inputs.fail-on }}" \
+          --results-dir "${{ github.workspace }}/.pipelineguard"

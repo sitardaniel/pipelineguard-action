@@ -1,0 +1,40 @@
+name: Test action
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  fails-on-vulnerable-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run PipelineGuard scan (expected to fail)
+        id: scan
+        continue-on-error: true
+        uses: ./
+        with:
+          path: test-fixtures/vulnerable
+          fail-on: HIGH
+          scanners: gitleaks
+
+      - name: Assert the scan actually failed
+        if: steps.scan.outcome != 'failure'
+        run: |
+          echo "::error::Expected the scan to fail on the vulnerable fixture, but it reported outcome '${{ steps.scan.outcome }}'"
+          exit 1
+
+  passes-on-clean-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run PipelineGuard scan (expected to pass)
+        uses: ./
+        with:
+          path: test-fixtures/clean
+          fail-on: HIGH
+          scanners: gitleaks
