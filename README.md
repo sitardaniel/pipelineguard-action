@@ -1,4 +1,4 @@
-# PipelineGuard Scan
+# BaghGuard Scan
 
 A composite GitHub Action that runs [Trivy](https://github.com/aquasecurity/trivy),
 [Checkov](https://github.com/bridgecrewio/checkov), [Gitleaks](https://github.com/gitleaks/gitleaks),
@@ -8,7 +8,7 @@ the build if anything is found at or above a severity threshold you choose.
 Standalone: everything runs inside your own CI job. It does not talk to any
 external service, store results anywhere, or require an account - it's a
 separate, self-contained pass/fail check, not connected to
-[PipelineGuard's](https://github.com/sitardaniel/pipelineguard-app) own
+[BaghGuard's](https://github.com/sitardaniel/pipelineguard-app) own
 scheduled scanning/dashboard/alerting system.
 
 ## Usage

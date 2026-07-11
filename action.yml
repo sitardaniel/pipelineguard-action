@@ -1,4 +1,4 @@
-name: 'PipelineGuard Scan'
+name: 'BaghGuard Scan'
 description: 'Run trivy, checkov, gitleaks, and grype against this repo and fail CI on findings above a severity threshold.'
 branding:
   icon: 'shield'
@@ -23,7 +23,7 @@ runs:
   steps:
     - name: Prepare results directory
       shell: bash
-      run: mkdir -p "${{ github.workspace }}/.pipelineguard"
+      run: mkdir -p "${{ github.workspace }}/.baghguard"
 
     - name: Run trivy
       if: contains(inputs.scanners, 'trivy')
@@ -31,7 +31,7 @@ runs:
       run: |
         docker run --rm -v "${{ github.workspace }}:/repo" aquasec/trivy fs \
           --format json --severity MEDIUM,HIGH,CRITICAL \
-          --output "/repo/.pipelineguard/trivy.json" "/repo/${{ inputs.path }}" || true
+          --output "/repo/.baghguard/trivy.json" "/repo/${{ inputs.path }}" || true
 
     - name: Run checkov
       if: contains(inputs.scanners, 'checkov')
@@ -39,20 +39,20 @@ runs:
       run: |
         docker run --rm -v "${{ github.workspace }}:/repo" bridgecrew/checkov \
           -d "/repo/${{ inputs.path }}" --framework terraform --output json --compact --soft-fail \
-          > "${{ github.workspace }}/.pipelineguard/checkov.json" 2>/dev/null || true
+          > "${{ github.workspace }}/.baghguard/checkov.json" 2>/dev/null || true
 
     - name: Run gitleaks
       if: contains(inputs.scanners, 'gitleaks')
       shell: bash
       # --no-git: scan the current file tree, not full commit history. A CI
       # gate runs on every push, so it only needs to catch secrets present
-      # right now - unlike the main PipelineGuard system's periodic full-
+      # right now - unlike the main BaghGuard system's periodic full-
       # history audit, re-flagging every past (possibly already-rotated)
       # secret on every single run would be noisy and wrong for this use case.
       run: |
         docker run --rm -v "${{ github.workspace }}:/repo" zricethezav/gitleaks detect \
           --source "/repo/${{ inputs.path }}" --no-git --report-format json \
-          --report-path "/repo/.pipelineguard/gitleaks.json" --exit-code 0 || true
+          --report-path "/repo/.baghguard/gitleaks.json" --exit-code 0 || true
 
     - name: Run grype
       if: contains(inputs.scanners, 'grype')
@@ -60,11 +60,11 @@ runs:
       run: |
         docker run --rm -v "${{ github.workspace }}:/repo" anchore/grype:debug \
           /grype "dir:/repo/${{ inputs.path }}" --output json \
-          --file "/repo/.pipelineguard/grype.json" || true
+          --file "/repo/.baghguard/grype.json" || true
 
     - name: Aggregate results and decide pass/fail
       shell: bash
       run: |
         python3 "${{ github.action_path }}/aggregate.py" \
           --fail-on "${{ inputs.fail-on }}" \
-          --results-dir "${{ github.workspace }}/.pipelineguard"
+          --results-dir "${{ github.workspace }}/.baghguard"

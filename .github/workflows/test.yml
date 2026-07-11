@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run PipelineGuard scan (expected to fail)
+      - name: Run BaghGuard scan (expected to fail)
         id: scan
         continue-on-error: true
         uses: ./
@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run PipelineGuard scan (expected to pass)
+      - name: Run BaghGuard scan (expected to pass)
         uses: ./
         with:
           path: test-fixtures/clean

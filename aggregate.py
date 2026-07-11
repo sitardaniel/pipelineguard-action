@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-PipelineGuard Action - aggregate scanner results and decide pass/fail.
+BaghGuard Action - aggregate scanner results and decide pass/fail.
 
-Parses the same JSON shapes the main PipelineGuard system's normalizer
+Parses the same JSON shapes the main BaghGuard system's normalizer
 already parses (trivy/checkov/gitleaks/grype), minus the Postgres/
 multi-user attribution - this runs standalone in CI.
 """
@@ -114,7 +114,7 @@ def write_summary(findings: list, fail_on: str, failed: bool):
     for f in findings:
         counts[f['severity']] = counts.get(f['severity'], 0) + 1
 
-    lines = ['# PipelineGuard scan results', '']
+    lines = ['# BaghGuard scan results', '']
     if not findings:
         lines.append('No findings.')
     else:
@@ -148,7 +148,7 @@ def write_summary(findings: list, fail_on: str, failed: bool):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--fail-on', default='HIGH')
-    parser.add_argument('--results-dir', default='.pipelineguard')
+    parser.add_argument('--results-dir', default='.baghguard')
     args = parser.parse_args()
 
     fail_on = args.fail_on.upper()
