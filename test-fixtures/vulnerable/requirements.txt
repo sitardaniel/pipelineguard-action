@@ -1,0 +1,7 @@
+# Deliberately-committed fixture for pipelineguard-action's own test workflow
+# and for exercising the BaghGuard auto-remediation feature end-to-end.
+# PyYAML 5.1 has known CVEs (e.g. CVE-2020-14343, arbitrary code execution
+# via full_load on untrusted input) fixed in 5.4 - a real, well-known
+# vulnerability that trivy/grype both recognize with a clear fix version,
+# and an unambiguous single-line == pin the remediator can safely patch.
+PyYAML==5.1
