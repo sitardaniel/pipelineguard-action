@@ -4,4 +4,4 @@
 # via full_load on untrusted input) fixed in 5.4 - a real, well-known
 # vulnerability that trivy/grype both recognize with a clear fix version,
 # and an unambiguous single-line == pin the remediator can safely patch.
-PyYAML==5.1
+PyYAML==5.2
